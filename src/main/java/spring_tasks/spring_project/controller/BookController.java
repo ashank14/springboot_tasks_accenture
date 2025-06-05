@@ -36,14 +36,14 @@ public class BookController {
         return null;
     }
 
-    @DeleteMapping("delete/{id}")
+    @DeleteMapping("/{id}")
     public String deleteBook(@PathVariable int id){
         boolean deleted=books.removeIf(book->book.id==id);
         return deleted?"Deleted":"id not found";
 
     }
 
-    @PostMapping("/addBook")
+    @PostMapping
     public ResponseEntity<?> addBook(@RequestBody Book book){
         boolean exists=books.stream().anyMatch(b->b.id==book.id);
 
