@@ -69,7 +69,7 @@ public class BookController {
                 return ResponseEntity.ok(book);
             }
         }
-        return ResponseEntity.status(404).body("Book not found ");
+        return ResponseEntity.status(404).body("Book not found");
     }
 
 }
