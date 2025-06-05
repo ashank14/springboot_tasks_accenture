@@ -53,7 +53,7 @@ public class BookController {
 
         books.add(book);
 
-        return ResponseEntity.status(200).body(books);
+        return ResponseEntity.status(201).body(books);
 
     }
 
