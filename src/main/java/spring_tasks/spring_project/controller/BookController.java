@@ -4,15 +4,74 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import spring_tasks.spring_project.Models.Book;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import spring_tasks.spring_project.repository.BookRepository;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDate;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/books")
 public class BookController {
 
-    //In-memory Database
+    @Autowired
+    private BookRepository bookRepository;
+
+    // GET all books
+    @GetMapping
+    public List<Book> getAllBooks() {
+        return bookRepository.findAll();
+    }
+
+    // GET a book by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<Book> getBookById(@PathVariable int id) {
+        Optional<Book> book = bookRepository.findById(id);
+        return book.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // POST a new book
+    @PostMapping
+    public ResponseEntity<Book> addBook(@RequestBody Book book) {
+        if (book.id>0 && bookRepository.existsById(book.id)) {
+            return ResponseEntity.status(409).build();
+        }
+        Book savedBook = bookRepository.save(book);
+        return ResponseEntity.status(201).body(savedBook);
+    }
+
+    // PUT update a book
+    @PutMapping("/{id}")
+    public ResponseEntity<Book> updateBook(@PathVariable int id,@RequestBody Book updatedBook) {
+        Optional<Book> bookOptional = bookRepository.findById(id);
+        if (bookOptional.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Book book=bookOptional.get();
+        book.title=updatedBook.title;
+        book.author=updatedBook.author;
+        book.publishedDate=updatedBook.publishedDate;
+
+        bookRepository.save(book);
+        return ResponseEntity.ok(book);
+    }
+
+    // DELETE a book by ID
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteBook(@PathVariable int id) {
+        if (!bookRepository.existsById(id)) {
+            return ResponseEntity.status(404).body("Book not found");
+        }
+        bookRepository.deleteById(id);
+        return ResponseEntity.ok("Book removed");
+    }
+
+    //Initial Code without H2 database(using an arraylist as an in memory database)
+    /*In-memory Database
     private List<Book> books=new ArrayList<>();
 
     public BookController(){
@@ -70,6 +129,7 @@ public class BookController {
             }
         }
         return ResponseEntity.status(404).body("Book not found");
-    }
+    }*/
+
 
 }
