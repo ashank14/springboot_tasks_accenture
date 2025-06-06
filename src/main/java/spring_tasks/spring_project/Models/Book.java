@@ -1,7 +1,5 @@
 package spring_tasks.spring_project.Models;
 
-import org.springframework.cglib.core.Local;
-
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
@@ -10,10 +8,10 @@ public class Book {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public int id;
-    public String title;
-    public String author;
-    public LocalDate publishedDate;
+    private int id;
+    private String title;
+    private String author;
+    private LocalDate publishedDate;
 
     public Book(){}
 
@@ -22,4 +20,34 @@ public class Book {
         this.author=author;
         this.publishedDate=publishedDate;
     }
+
+    public int getId(){
+        return id;
+    }
+    public void setId(int id){
+        this.id=id;
+    }
+
+    public String getTitle(){
+        return title;
+    }
+    public void setTitle(String title){
+        this.title=title;
+    }
+
+    public String getAuthor(){
+        return author;
+    }
+    public void setAuthor(String author){
+        this.author=author;
+    }
+
+    public LocalDate getPublishedDate() {
+        return publishedDate;
+    }
+
+    public void setPublishedDate(LocalDate publishedDate){
+        this.publishedDate= publishedDate;
+    }
+
 }

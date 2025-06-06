@@ -15,8 +15,6 @@ import spring_tasks.spring_project.service.BookService;
 
 
 
-
-
 @RestController
 @RequestMapping("/books")
 public class BookController {
