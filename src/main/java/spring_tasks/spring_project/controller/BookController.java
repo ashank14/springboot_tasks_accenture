@@ -56,7 +56,7 @@ public class BookController {
     public ResponseEntity<String> deleteBook(@PathVariable int id) {
         boolean deleted= bookService.deleteBook(id);
         if(deleted){
-            return ResponseEntity.ok("Deleted");
+            return ResponseEntity.ok("Book removed");
         }
         throw new NoSuchElementException("Book with ID "+ id+" not found");
     }
