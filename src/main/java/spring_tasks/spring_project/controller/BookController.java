@@ -1,74 +1,68 @@
 package spring_tasks.spring_project.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import spring_tasks.spring_project.Models.Book;
+
+import spring_tasks.spring_project.DTO.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import spring_tasks.spring_project.repository.BookRepository;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.time.LocalDate;
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import spring_tasks.spring_project.service.BookService;
+
+
+
+
 
 @RestController
 @RequestMapping("/books")
 public class BookController {
-
     @Autowired
-    private BookRepository bookRepository;
+    private BookService bookService;
 
     // GET all books
     @GetMapping
-    public List<Book> getAllBooks() {
-        return bookRepository.findAll();
+    public List<BookResponseDTO> getAllBooks() {
+        return bookService.getAllBooks();
     }
 
-    // GET a book by ID
+
+    //GET a book by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Book> getBookById(@PathVariable int id) {
-        Optional<Book> book = bookRepository.findById(id);
-        return book.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<BookResponseDTO> getBookById(@PathVariable int id) {
+        Optional<BookResponseDTO> book=bookService.getBookById(id);
+        return book.map(b->ResponseEntity.ok(b)).orElseThrow(()->new NoSuchElementException("Book with ID "+ id+" not found"));
     }
 
-    // POST a new book
+    //POST a new book
     @PostMapping
-    public ResponseEntity<Book> addBook(@RequestBody Book book) {
-        if (book.id>0 && bookRepository.existsById(book.id)) {
-            return ResponseEntity.status(409).build();
-        }
-        Book savedBook = bookRepository.save(book);
-        return ResponseEntity.status(201).body(savedBook);
+    public ResponseEntity<BookResponseDTO> addBook(@Valid @RequestBody BookRequestDTO book) {
+        Optional<BookResponseDTO> savedBook=bookService.addBook(book);
+        return ResponseEntity.status(201).body(savedBook.get());
     }
 
     // PUT update a book
     @PutMapping("/{id}")
-    public ResponseEntity<Book> updateBook(@PathVariable int id,@RequestBody Book updatedBook) {
-        Optional<Book> bookOptional = bookRepository.findById(id);
-        if (bookOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Book book=bookOptional.get();
-        book.title=updatedBook.title;
-        book.author=updatedBook.author;
-        book.publishedDate=updatedBook.publishedDate;
-
-        bookRepository.save(book);
-        return ResponseEntity.ok(book);
+    public ResponseEntity<BookResponseDTO> updateBook(@PathVariable int id,@Valid @RequestBody BookRequestDTO updatedBook) {
+        Optional<BookResponseDTO>book=bookService.updateBook(id,updatedBook);
+        return book.map(b->ResponseEntity.ok(b)).orElseThrow(()->new NoSuchElementException("Book with ID "+ id+" not found"));
     }
 
     // DELETE a book by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteBook(@PathVariable int id) {
-        if (!bookRepository.existsById(id)) {
-            return ResponseEntity.status(404).body("Book not found");
+        boolean deleted= bookService.deleteBook(id);
+        if(deleted){
+            return ResponseEntity.ok("Deleted");
         }
-        bookRepository.deleteById(id);
-        return ResponseEntity.ok("Book removed");
+        throw new NoSuchElementException("Book with ID "+ id+" not found");
     }
+
+
+
 
     //Initial Code without H2 database(using an arraylist as an in memory database)
     /*In-memory Database
