@@ -40,8 +40,8 @@ public class BookController {
     //POST a new book
     @PostMapping
     public ResponseEntity<BookResponseDTO> addBook(@Valid @RequestBody BookRequestDTO book) {
-        Optional<BookResponseDTO> savedBook=bookService.addBook(book);
-        return ResponseEntity.status(201).body(savedBook.get());
+        BookResponseDTO savedBook=bookService.addBook(book);
+        return ResponseEntity.status(201).body(savedBook);
     }
 
     // PUT update a book

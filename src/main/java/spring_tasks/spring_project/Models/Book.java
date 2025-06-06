@@ -17,8 +17,7 @@ public class Book {
 
     public Book(){}
 
-    public Book(int id, String title, String author, LocalDate publishedDate){
-        this.id=id;
+    public Book( String title, String author, LocalDate publishedDate){
         this.title=title;
         this.author=author;
         this.publishedDate=publishedDate;

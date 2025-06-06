@@ -33,7 +33,7 @@ public class BookService {
     }
 
     //add a book
-    public Optional<BookResponseDTO> addBook(BookRequestDTO book) {
+    public BookResponseDTO addBook(BookRequestDTO book) {
         Book newbook=new Book();
         newbook.title=book.title;
         newbook.author=book.author;
@@ -41,7 +41,7 @@ public class BookService {
 
         Book savedBook=bookRepository.save(newbook);
 
-        return Optional.of(new BookResponseDTO(savedBook.id, savedBook.title, savedBook.author, savedBook.publishedDate));
+        return new BookResponseDTO(savedBook.id, savedBook.title, savedBook.author, savedBook.publishedDate);
 
     }
 
