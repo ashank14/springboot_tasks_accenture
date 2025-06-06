@@ -164,7 +164,7 @@ Use **Postman** for testing.
 
 ---
 
-## 📬 API Error Responses Example
+## API Error Responses Example
 
 **404 Not Found**
 
