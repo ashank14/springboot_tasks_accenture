@@ -3,6 +3,7 @@
 A simple RESTful API built with **Spring Boot** for managing a collection of books.  
 Includes CRUD operations using an embedded **H2 Database**, **DTOs**, **Service layer**, **global exception handling**, and **input validation**. Deployed
  with base URL: https://accenture-tasks-174cd6eff134.herokuapp.com/
+Access API docs at: https://accenture-tasks-174cd6eff134.herokuapp.com/swagger-ui.html
 
 ---
 
