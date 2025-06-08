@@ -32,7 +32,7 @@ public class BookController {
     @GetMapping("/{id}")
     public ResponseEntity<BookResponseDTO> getBookById(@PathVariable int id) {
         Optional<BookResponseDTO> book=bookService.getBookById(id);
-        return book.map(b->ResponseEntity.ok(b)).orElseThrow(()->new NoSuchElementException("Book with ID "+ id+" not found"));
+        return book.map(ResponseEntity::ok).orElseThrow(()->new NoSuchElementException("Book with ID "+ id+" not found"));
     }
 
     //POST a new book
@@ -46,7 +46,7 @@ public class BookController {
     @PutMapping("/{id}")
     public ResponseEntity<BookResponseDTO> updateBook(@PathVariable int id,@Valid @RequestBody BookRequestDTO updatedBook) {
         Optional<BookResponseDTO>book=bookService.updateBook(id,updatedBook);
-        return book.map(b->ResponseEntity.ok(b)).orElseThrow(()->new NoSuchElementException("Book with ID "+ id+" not found"));
+        return book.map(ResponseEntity::ok).orElseThrow(()->new NoSuchElementException("Book with ID "+ id+" not found"));
     }
 
     // DELETE a book by ID

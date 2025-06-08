@@ -20,20 +20,17 @@ public class GloabalExceptionHandler {
         ErrorResponseDTO error=new ErrorResponseDTO(ex.getMessage(),404);
         return ResponseEntity.status(404).body(error);
     }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDTO> handleArgument(MethodArgumentNotValidException ex){
         String errorMsg=ex.getBindingResult().getFieldErrors().stream().map(error->error.getField()+" : " + error.getDefaultMessage()).collect((Collectors.joining()));
         ErrorResponseDTO error=new ErrorResponseDTO(errorMsg,400);
         return ResponseEntity.status(400).body(error);
     }
-
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponseDTO> handleTypeMismatch(MethodArgumentTypeMismatchException ex){
         ErrorResponseDTO error=new ErrorResponseDTO("Invalid input format",400);
         return ResponseEntity.status(400).body(error);
     }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGeneric(Exception ex){
         ErrorResponseDTO error=new ErrorResponseDTO("Internal Server Error",500);
