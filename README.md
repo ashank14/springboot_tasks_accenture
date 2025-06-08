@@ -146,6 +146,21 @@ Use **Postman** for testing.
 
 ---
 
+##  Testing
+
+**Controller Tests**
+- Use MockMvc to simulate HTTP requests to controller endpoints
+- Mock service layer using Mockito
+- Verify status codes, response JSON, and interactions
+
+**Service Tests**
+- Use Mockito to mock the repository
+- Test service logic independently of database
+- Validate transformation between entities and DTOs
+
+## Run Tests with:
+   `mvn test`
+
 ##  Notes
 
 - Uses **H2 Database** for data storage (data resets on server restart)
