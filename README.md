@@ -142,7 +142,7 @@ Use **Postman** for testing.
 
 5. Access the H2 console:  
    `http://localhost:8080/h2-console`
-- JDBC URL: `jdbc:h2:mem:testdb`
+- JDBC URL: `jdbc:h2:mem:dcbapp`
 
 ---
 
