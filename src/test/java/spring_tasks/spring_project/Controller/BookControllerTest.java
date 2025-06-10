@@ -8,8 +8,8 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.web.servlet.MockMvc;
-import spring_tasks.spring_project.DTO.BookRequestDTO;
-import spring_tasks.spring_project.DTO.BookResponseDTO;
+import spring_tasks.spring_project.dto.BookRequestDTO;
+import spring_tasks.spring_project.dto.BookResponseDTO;
 import spring_tasks.spring_project.service.BookService;
 
 import java.time.LocalDate;

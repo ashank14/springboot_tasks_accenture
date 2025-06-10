@@ -4,8 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import spring_tasks.spring_project.DTO.BookRequestDTO;
-import spring_tasks.spring_project.DTO.BookResponseDTO;
+import spring_tasks.spring_project.dto.BookRequestDTO;
+import spring_tasks.spring_project.dto.BookResponseDTO;
 import spring_tasks.spring_project.Models.Book;
 import spring_tasks.spring_project.repository.BookRepository;
 import spring_tasks.spring_project.service.BookService;
@@ -55,7 +55,7 @@ class BookServiceTest {
         Optional<BookResponseDTO> result = bookService.getBookById(1);
 
         assertTrue(result.isPresent());
-        assertEquals("Title", result.get().getTitle());
+        assertEquals("Title", result.get().title());
     }
 
     @Test
@@ -68,8 +68,8 @@ class BookServiceTest {
 
         BookResponseDTO result = bookService.addBook(requestDTO);
 
-        assertEquals("New Title", result.getTitle());
-        assertEquals(1, result.getId());
+        assertEquals("New Title", result.title());
+        assertEquals(1, result.id());
         verify(bookRepository, times(1)).save(any(Book.class));
     }
 

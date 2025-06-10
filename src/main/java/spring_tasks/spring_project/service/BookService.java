@@ -1,7 +1,7 @@
 package spring_tasks.spring_project.service;
 
 import org.springframework.stereotype.Service;
-import spring_tasks.spring_project.DTO.*;
+import spring_tasks.spring_project.dto.*;
 import spring_tasks.spring_project.Models.Book;
 import spring_tasks.spring_project.repository.BookRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,28 +10,34 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 public class BookService {
-
+    private static final Logger logger=LoggerFactory.getLogger(BookService.class);
     @Autowired
     private BookRepository bookRepository;
 
     // Get all books
     public List<BookResponseDTO> getAllBooks() {
+        logger.info("getting books");
         return bookRepository.findAll().stream().map(book -> new BookResponseDTO(book.getId(), book.getTitle(), book.getAuthor(), book.getPublishedDate())).collect(Collectors.toList());
     }
 
     // Get book by ID
     public Optional<BookResponseDTO> getBookById(int id) {
+        logger.info("getting book with id:{}",id);
         return bookRepository.findById(id).map(book -> new BookResponseDTO(book.getId(), book.getTitle(), book.getAuthor(), book.getPublishedDate()));
     }
 
     // Add a new book
     public BookResponseDTO addBook(BookRequestDTO bookDTO) {
+        logger.info("Adding new book");
         Book newBook = new Book();
-        newBook.setTitle(bookDTO.getTitle());
-        newBook.setAuthor(bookDTO.getAuthor());
-        newBook.setPublishedDate(bookDTO.getPublishedDate());
+        newBook.setTitle(bookDTO.title());
+        newBook.setAuthor(bookDTO.author());
+        newBook.setPublishedDate(bookDTO.publishedDate());
 
         Book savedBook = bookRepository.save(newBook);
         return new BookResponseDTO(savedBook.getId(), savedBook.getTitle(), savedBook.getAuthor(), savedBook.getPublishedDate());
@@ -39,10 +45,11 @@ public class BookService {
 
     // Update a book
     public Optional<BookResponseDTO> updateBook(int id, BookRequestDTO updatedBook) {
+        logger.info("Updating details of book with id:{}",id);
         return bookRepository.findById(id).map(book -> {
-            book.setTitle(updatedBook.getTitle());
-            book.setAuthor(updatedBook.getAuthor());
-            book.setPublishedDate(updatedBook.getPublishedDate());
+            book.setTitle(updatedBook.title());
+            book.setAuthor(updatedBook.author());
+            book.setPublishedDate(updatedBook.publishedDate());
             bookRepository.save(book);
             return new BookResponseDTO(
                     book.getId(), book.getTitle(), book.getAuthor(), book.getPublishedDate());
@@ -51,6 +58,7 @@ public class BookService {
 
     // Delete a book
     public boolean deleteBook(int id) {
+        logger.info("Deleting book with id:{}",id);
         if (!bookRepository.existsById(id)) {
             return false;
         }

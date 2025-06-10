@@ -1,12 +1,6 @@
-package spring_tasks.spring_project.DTO;
+package spring_tasks.spring_project.dto;
 
-public class ErrorResponseDTO {
 
-    public String message;
-    public int status;
 
-    public ErrorResponseDTO(String message, int status){
-        this.message=message;
-        this.status=status;
-    }
-}
+public record ErrorResponseDTO(String message,int status){}
+

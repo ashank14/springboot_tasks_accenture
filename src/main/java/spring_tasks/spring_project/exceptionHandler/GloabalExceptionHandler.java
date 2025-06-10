@@ -1,13 +1,12 @@
 package spring_tasks.spring_project.exceptionHandler;
 
 
-import org.springframework.boot.web.server.ErrorPage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import spring_tasks.spring_project.DTO.ErrorResponseDTO;
+import spring_tasks.spring_project.dto.ErrorResponseDTO;
 
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
