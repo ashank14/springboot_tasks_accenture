@@ -1,4 +1,4 @@
-package spring_tasks.spring_project.Models;
+package spring_tasks.spring_project.models;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;

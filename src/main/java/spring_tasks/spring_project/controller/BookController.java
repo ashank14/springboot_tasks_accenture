@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import reactor.core.publisher.Mono;
 import spring_tasks.spring_project.dto.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+
+import spring_tasks.spring_project.models.Book;
 import spring_tasks.spring_project.service.BookService;
 
 import org.slf4j.Logger;
@@ -67,6 +70,16 @@ public class BookController {
             return ResponseEntity.ok("Book removed");
         }
         throw new NoSuchElementException("Book with ID "+ id+" not found");
+    }
+
+    @GetMapping("/search")
+    public Mono<List<GoogleApiResponseDTO>> callApi(@RequestParam String title){
+        return bookService.searchBooks(title);
+    }
+
+    @PostMapping("/addViaAPI")
+    public Book addViaAPI(@RequestBody String id){
+        return bookService.addViaAPI(id);
     }
 
 

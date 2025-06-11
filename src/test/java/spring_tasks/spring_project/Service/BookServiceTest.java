@@ -6,7 +6,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import spring_tasks.spring_project.dto.BookRequestDTO;
 import spring_tasks.spring_project.dto.BookResponseDTO;
-import spring_tasks.spring_project.Models.Book;
+import spring_tasks.spring_project.models.Book;
 import spring_tasks.spring_project.repository.BookRepository;
 import spring_tasks.spring_project.service.BookService;
 
