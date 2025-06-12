@@ -2,15 +2,14 @@ package spring_tasks.spring_project.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
-public class WebClientConfig {
+public class RestTemplateConfig {
 
     @Bean
-    public WebClient webClient(WebClient.Builder builder) {
-        return builder
-                .baseUrl("https://www.googleapis.com/books/v1/volumes")
-                .build();
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 }

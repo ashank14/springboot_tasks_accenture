@@ -1,10 +1,16 @@
 package spring_tasks.spring_project.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import spring_tasks.spring_project.dto.*;
+import spring_tasks.spring_project.kafka.producer.KafkaProducerService;
 import spring_tasks.spring_project.models.Book;
 import spring_tasks.spring_project.repository.BookRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,12 +32,15 @@ public class BookService {
     @Autowired
     private BookRepository bookRepository;
 
-    private final WebClient webClient;
     @Autowired
-    public BookService(WebClient webClient) {
-        this.webClient = webClient;
-    }
+    private KafkaProducerService notificationProducer;
 
+    private final RestTemplate restTemplate;
+
+    @Autowired
+    public BookService(RestTemplate restTemplate, BookRepository bookRepository) {
+        this.restTemplate = restTemplate;
+    }
 
     // Get all books
     public List<BookResponseDTO> getAllBooks() {
@@ -54,6 +63,8 @@ public class BookService {
         newBook.setPublishedDate(bookDTO.publishedDate());
 
         Book savedBook = bookRepository.save(newBook);
+        String notificationMessage = "New Book Added: " + savedBook.getTitle() + " by " + savedBook.getAuthor();
+        notificationProducer.sendNotification(notificationMessage);
         return new BookResponseDTO(savedBook.getId(), savedBook.getTitle(), savedBook.getAuthor(), savedBook.getPublishedDate());
     }
 
@@ -65,9 +76,13 @@ public class BookService {
             book.setAuthor(updatedBook.author());
             book.setPublishedDate(updatedBook.publishedDate());
             bookRepository.save(book);
+
+
             return new BookResponseDTO(
                     book.getId(), book.getTitle(), book.getAuthor(), book.getPublishedDate());
         });
+
+
     }
 
     // Delete a book
@@ -80,102 +95,111 @@ public class BookService {
         return true;
     }
 
+    @CircuitBreaker(name = "googleApiBreaker", fallbackMethod = "searchBooksFallback")
+    @Retry(name = "googleApiRetry", fallbackMethod = "searchBooksFallback")
+    public List<GoogleApiResponseDTO> searchBooks(String title) {
+        logger.info("Fetching from API");
 
+        String url = "https://www.googleapis.com/books/v1/volumes?q=intitle:" + title +
+                "&key=AIzaSyD6_cE-b63l2ULS769mir0ySpknbihJwhI";
 
-    public Mono<List<GoogleApiResponseDTO>> searchBooks(String title) {
-        logger.info("fetching from api");
-        return webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/")
-                        .queryParam("q", "intitle:" + title)
-                        .queryParam("key", "AIzaSyD6_cE-b63l2ULS769mir0ySpknbihJwhI")
-                        .build())
-                .retrieve()
-                .bodyToMono(JsonNode.class)  // Read response as JSON
-                .map(jsonNode -> {
-                    if (!jsonNode.has("items") || jsonNode.get("items").isEmpty()) {
-                        throw new NoSuchElementException("No books found for title: " + title);
-                    }
-                    logger.info("mapping");
-                    List<GoogleApiResponseDTO> books = new ArrayList<>();
-                    jsonNode.get("items").forEach(item -> {
-                        JsonNode volumeInfo = item.get("volumeInfo");
-                        logger.info(String.valueOf(volumeInfo));
-                        books.add(new GoogleApiResponseDTO(
-                                item.get("id").asText(),
-                                volumeInfo.get("title").asText(),
-                                volumeInfo.has("authors") ? StreamSupport.stream(
-                                                volumeInfo.get("authors").spliterator(), false)
-                                        .map(JsonNode::asText)
-                                        .collect(Collectors.toList()) : List.of("Unknown"),
-                                volumeInfo.has("publishedDate") ?LocalDate.parse(volumeInfo.get("publishedDate").asText()) : null
-                        ));
-                    });
-                    return books;
-                });
+        ResponseEntity<JsonNode> response = restTemplate.getForEntity(url, JsonNode.class);
+        JsonNode jsonNode = response.getBody();
+
+        if (jsonNode == null || !jsonNode.has("items") || jsonNode.get("items").isEmpty()) {
+            throw new NoSuchElementException("No books found for title: " + title);
+        }
+
+        List<GoogleApiResponseDTO> books = new ArrayList<>();
+        jsonNode.get("items").forEach(item -> {
+            JsonNode volumeInfo = item.get("volumeInfo");
+            logger.info(String.valueOf(volumeInfo));
+
+            List<String> authors = volumeInfo.has("authors") ?
+                    StreamSupport.stream(volumeInfo.get("authors").spliterator(), false)
+                            .map(JsonNode::asText)
+                            .collect(Collectors.toList()) :
+                    List.of("Unknown");
+
+            LocalDate publishedDate = volumeInfo.has("publishedDate") ?
+                    LocalDate.parse(volumeInfo.get("publishedDate").asText()) : null;
+
+            books.add(new GoogleApiResponseDTO(
+                    item.get("id").asText(),
+                    volumeInfo.get("title").asText(),
+                    authors,
+                    publishedDate
+            ));
+        });
+
+        return books;
     }
 
-    public Book addViaAPI(String id){
-            // Clean up the ID by removing any extraneous double quotes.
-            String cleanId = id.replaceAll("^\"|\"$", "");
-            logger.info("Getting book via API with id: {}", cleanId);
+    public List<GoogleApiResponseDTO> searchBooksFallback(String title, Throwable t) {
+        GoogleApiResponseDTO placeholder = new GoogleApiResponseDTO(
+                "N/A",
+                "Google Books API is currently unavailable",
+                List.of("N/A"),
+                null
+        );
 
-            // 1. Call the external API to get the JSON response.
-            Mono<JsonNode> jsonResponseMono = webClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/{id}")
-                            .queryParam("key", "AIzaSyD6_cE-b63l2ULS769mir0ySpknbihJwhI")
-                            .build(cleanId))
-                    .retrieve()
-                    .bodyToMono(JsonNode.class);
+        return List.of(placeholder);
+    }
 
-            // 2. Map the JSON response to GoogleApiResponseDTO.
-            Mono<GoogleApiResponseDTO> googleApiResponseMono = jsonResponseMono.map(jsonNode -> {
-                JsonNode volumeInfo = jsonNode.get("volumeInfo");
-                String title = volumeInfo.get("title").asText();
-                logger.info("VolumeInfo: {}", volumeInfo);
+    @CircuitBreaker(name = "googleApiBreaker", fallbackMethod = "addViaApiFallback")
+    @Retry(name = "googleApiRetry", fallbackMethod = "addViaApiFallback")
+    public Book addViaApi(String id) {
+        logger.info("Getting book via API with id: {}", id);
 
-                List<String> authors = volumeInfo.has("authors")
-                        ? StreamSupport.stream(volumeInfo.get("authors").spliterator(), false)
+        String cleanId = id.replaceAll("^\"|\"$", "");
+        String url = "https://www.googleapis.com/books/v1/volumes/" + cleanId +
+                "?key=AIzaSyD6_cE-b63l2ULS769mir0ySpknbihJwhI";
+
+        ResponseEntity<JsonNode> response = restTemplate.getForEntity(url, JsonNode.class);
+        JsonNode jsonNode = response.getBody();
+
+        if (jsonNode == null || !jsonNode.has("volumeInfo")) {
+            throw new NoSuchElementException("No book found for id: " + cleanId);
+        }
+
+        JsonNode volumeInfo = jsonNode.get("volumeInfo");
+        logger.info("VolumeInfo: {}", volumeInfo);
+
+        List<String> authors = volumeInfo.has("authors") ?
+                StreamSupport.stream(volumeInfo.get("authors").spliterator(), false)
                         .map(JsonNode::asText)
-                        .collect(Collectors.toList())
-                        : List.of("Unknown");
+                        .collect(Collectors.toList()) :
+                List.of("Unknown");
 
-                LocalDate publishedDate = volumeInfo.has("publishedDate")
-                        ? LocalDate.parse(volumeInfo.get("publishedDate").asText())
-                        : null;
+        LocalDate publishedDate = volumeInfo.has("publishedDate") ?
+                LocalDate.parse(volumeInfo.get("publishedDate").asText()) : null;
 
-                logger.info("Returning GoogleApiResponseDTO");
-                return new GoogleApiResponseDTO(
-                        jsonNode.get("id").asText(),
-                        title,
-                        authors,
-                        publishedDate
-                );
-            });
+        GoogleApiResponseDTO googleResponse = new GoogleApiResponseDTO(
+                jsonNode.get("id").asText(),
+                volumeInfo.get("title").asText(),
+                authors,
+                publishedDate
+        );
 
-            // 3. Map the GoogleApiResponseDTO to BookRequestDTO.
-            Mono<BookRequestDTO> bookRequestDTOMono = googleApiResponseMono.map(googleResponse ->
-                    new BookRequestDTO(
-                            googleResponse.title(),
-                            googleResponse.author().get(0),  // Using the first author for simplicity
-                            googleResponse.publishedDate()
-                    )
-            );
+        Book book = new Book(
+                googleResponse.title(),
+                googleResponse.author().get(0),
+                googleResponse.publishedDate()
+        );
 
-            // 4. Finally, create a Book domain object from the BookRequestDTO.
-            Mono<Book> bookMono = bookRequestDTOMono.map(bookRequestDTO ->
-                    new Book(
-                            bookRequestDTO.title(),
-                            bookRequestDTO.author(),
-                            bookRequestDTO.publishedDate()
-                    )
-            );
-            //Add to database
-            return bookRepository.save(bookMono.block());
-
+        return bookRepository.save(book);
     }
 
+    public Book addViaApiFallback(String id, Throwable t) {
+        logger.error("Fallback triggered: {}", t.getMessage());
+        Book placeholder = new Book(
+                "no title",
+                "no author",
+                null
+        );
+
+        return placeholder;
+    }
 
 
 }

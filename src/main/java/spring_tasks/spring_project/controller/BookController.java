@@ -73,13 +73,13 @@ public class BookController {
     }
 
     @GetMapping("/search")
-    public Mono<List<GoogleApiResponseDTO>> callApi(@RequestParam String title){
+    public List<GoogleApiResponseDTO> callApi(@RequestParam String title){
         return bookService.searchBooks(title);
     }
 
     @PostMapping("/addViaAPI")
     public Book addViaAPI(@RequestBody String id){
-        return bookService.addViaAPI(id);
+        return bookService.addViaApi(id);
     }
 
 
