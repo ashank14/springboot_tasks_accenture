@@ -4,8 +4,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import spring_tasks.spring_project.dto.BookRequestDTO;
 import spring_tasks.spring_project.dto.BookResponseDTO;
+import spring_tasks.spring_project.kafka.producer.KafkaProducerService;
 import spring_tasks.spring_project.models.Book;
 import spring_tasks.spring_project.repository.BookRepository;
 import spring_tasks.spring_project.service.BookService;
@@ -18,13 +21,19 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+
+@SpringBootTest
 class BookServiceTest {
 
     @Mock
     private BookRepository bookRepository;
 
+    @Mock
+    private KafkaProducerService kafkaProducerService;
+
     @InjectMocks
     private BookService bookService;
+
 
     public BookServiceTest() {
         MockitoAnnotations.openMocks(this);
