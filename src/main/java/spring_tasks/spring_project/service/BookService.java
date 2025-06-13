@@ -3,12 +3,11 @@ package spring_tasks.spring_project.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+
 import spring_tasks.spring_project.dto.*;
 import spring_tasks.spring_project.kafka.producer.KafkaProducerService;
 import spring_tasks.spring_project.models.Book;
@@ -16,6 +15,9 @@ import spring_tasks.spring_project.repository.BookRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -28,19 +30,23 @@ import org.slf4j.LoggerFactory;
 
 @Service
 public class BookService {
+
     private static final Logger logger=LoggerFactory.getLogger(BookService.class);
+
     @Autowired
     private BookRepository bookRepository;
 
     @Autowired
     private KafkaProducerService notificationProducer;
 
-    private final RestTemplate restTemplate;
-
     @Autowired
-    public BookService(RestTemplate restTemplate, BookRepository bookRepository) {
-        this.restTemplate = restTemplate;
-    }
+    private RestTemplate restTemplate;
+
+    @Value("${google.api.base-url}")
+    private String baseURL;
+
+    @Value("${google.api.key}")
+    private String googleApiKey;
 
     // Get all books
     public List<BookResponseDTO> getAllBooks() {
@@ -100,14 +106,15 @@ public class BookService {
     public List<GoogleApiResponseDTO> searchBooks(String title) {
         logger.info("Fetching from API");
 
-        String url = "https://www.googleapis.com/books/v1/volumes?q=intitle:" + title +
-                "&key=AIzaSyD6_cE-b63l2ULS769mir0ySpknbihJwhI";
+        String url = baseURL + "?q=intitle:" + title + "&key=" + googleApiKey;
+
+        logger.info(url);
 
         ResponseEntity<JsonNode> response = restTemplate.getForEntity(url, JsonNode.class);
         JsonNode jsonNode = response.getBody();
 
         if (jsonNode == null || !jsonNode.has("items") || jsonNode.get("items").isEmpty()) {
-            throw new NoSuchElementException("No books found for title: " + title);
+            return List.of();
         }
 
         List<GoogleApiResponseDTO> books = new ArrayList<>();
@@ -121,9 +128,15 @@ public class BookService {
                             .collect(Collectors.toList()) :
                     List.of("Unknown");
 
-            LocalDate publishedDate = volumeInfo.has("publishedDate") ?
-                    LocalDate.parse(volumeInfo.get("publishedDate").asText()) : null;
+            logger.info("date");
+            DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                    .appendPattern("yyyy[-MM[-dd]]")
+                    .parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
+                    .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+                    .toFormatter();
+            LocalDate publishedDate = LocalDate.parse(volumeInfo.get("publishedDate").asText(), formatter);
 
+            logger.info("returning books");
             books.add(new GoogleApiResponseDTO(
                     item.get("id").asText(),
                     volumeInfo.get("title").asText(),
@@ -149,11 +162,11 @@ public class BookService {
     @CircuitBreaker(name = "googleApiBreaker", fallbackMethod = "addViaApiFallback")
     @Retry(name = "googleApiRetry", fallbackMethod = "addViaApiFallback")
     public Book addViaApi(String id) {
+
         logger.info("Getting book via API with id: {}", id);
 
         String cleanId = id.replaceAll("^\"|\"$", "");
-        String url = "https://www.googleapis.com/books/v1/volumes/" + cleanId +
-                "?key=AIzaSyD6_cE-b63l2ULS769mir0ySpknbihJwhI";
+        String url = baseURL+"/"+ cleanId + "?key=" + googleApiKey;
 
         ResponseEntity<JsonNode> response = restTemplate.getForEntity(url, JsonNode.class);
         JsonNode jsonNode = response.getBody();
@@ -193,7 +206,7 @@ public class BookService {
     public Book addViaApiFallback(String id, Throwable t) {
         logger.error("Fallback triggered: {}", t.getMessage());
         Book placeholder = new Book(
-                "no title",
+                "Google Books API is currently unavailable",
                 "no author",
                 null
         );
