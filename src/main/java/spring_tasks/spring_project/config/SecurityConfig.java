@@ -34,10 +34,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/hello").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/books").permitAll()// open endpoint
-                        .anyRequest().authenticated() // all other requests need authentication
+                        .requestMatchers(HttpMethod.GET, "/books").permitAll()
+                        .anyRequest().authenticated()
                 )
-                .formLogin(Customizer.withDefaults()); // use basic auth
+                .httpBasic(Customizer.withDefaults())
+                .formLogin(Customizer.withDefaults());
 
         return http.build();
     }
