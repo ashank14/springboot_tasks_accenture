@@ -184,8 +184,12 @@ public class BookService {
                         .collect(Collectors.toList()) :
                 List.of("Unknown");
 
-        LocalDate publishedDate = volumeInfo.has("publishedDate") ?
-                LocalDate.parse(volumeInfo.get("publishedDate").asText()) : null;
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                .appendPattern("yyyy[-MM[-dd]]")
+                .parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
+                .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+                .toFormatter();
+        LocalDate publishedDate = LocalDate.parse(volumeInfo.get("publishedDate").asText(), formatter);
 
         GoogleApiResponseDTO googleResponse = new GoogleApiResponseDTO(
                 jsonNode.get("id").asText(),
