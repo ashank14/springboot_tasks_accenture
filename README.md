@@ -3,8 +3,8 @@
 ![CI](https://github.com/ashank14/springboot_tasks_accenture/actions/workflows/ci.yml/badge.svg)
 ---
 A simple RESTful API built with **Spring Boot** for managing a collection of books.  
-Includes CRUD operations using an embedded **H2 Database**, **DTOs**, **Service layer**, **global exception handling**, and **input validation**. Deployed
- with base URL: https://accenture-tasks-174cd6eff134.herokuapp.com/
+Includes CRUD operations using an embedded **H2 Database**, **DTOs**, **Service layer**, **global exception handling**, and **input validation**.
+Deployed with base URL: https://accenture-tasks-174cd6eff134.herokuapp.com/. 
 Access API docs at: https://accenture-tasks-174cd6eff134.herokuapp.com/swagger-ui.html
 
 ---
@@ -18,6 +18,8 @@ Access API docs at: https://accenture-tasks-174cd6eff134.herokuapp.com/swagger-u
 - `POST /books` → Add a new book (with validation)
 - `PUT /books/{id}` → Update an existing book
 - `DELETE /books/{id}` → Delete a book by ID
+- `GET /books/search?title={title}` → Fetches books from Google Books API
+- `POST /books/addViaApi` → Adds a book from Google Books API into H2 database
 - Uses **Data Transfer Objects (DTOs)** for clean API responses
 - Business logic separated into a **BookService** class
 - Centralized **global exception handling** via `@ControllerAdvice`
@@ -97,6 +99,48 @@ Returns a list of all books (as `BookResponseDTO`).
 - Returns 404 Not Found if invalid ID
 
 ---
+
+### 🔹  Search Google Books by Title
+
+**GET /books/search?title={title}**
+-Fetches a list of books matching the title from the Google Books API.
+
+**Example:**
+GET /books/search?title=The Hobbit
+```json
+[
+{
+"title": "The Hobbit",
+"author": "J.R.R. Tolkien",
+"publishedDate": "1937-09-21"
+}
+]
+
+```
+### 🔹 Add a Book via Google Books API
+
+**POST** `/books/addViaApi`
+
+---
+
+#### 📤 Request Body Example:
+
+```json
+{
+  "id": "mxDLY0qL2mAC"
+}
+```
+
+#### 📥 Response Example:
+
+```json
+{
+  "id": 5,
+  "title": "Pride and Prejudice",
+  "author": "Jane Austen",
+  "publishedDate": "1937-09-21"
+}
+```
 
 ##  Tech Stack
 
