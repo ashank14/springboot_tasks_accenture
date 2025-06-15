@@ -70,7 +70,12 @@ public class BookService {
 
         Book savedBook = bookRepository.save(newBook);
         String notificationMessage = "New Book Added: " + savedBook.getTitle() + " by " + savedBook.getAuthor();
-        notificationProducer.sendNotification(notificationMessage);
+        try {
+            notificationProducer.sendNotification(notificationMessage);
+        } catch (Exception e) {
+            logger.warn("Could not send Kafka notification: {}", e.getMessage());
+        }
+
         return new BookResponseDTO(savedBook.getId(), savedBook.getTitle(), savedBook.getAuthor(), savedBook.getPublishedDate());
     }
 
@@ -206,7 +211,11 @@ public class BookService {
         );
 
         String notificationMessage = "New Book Added: " + book.getTitle() + " by " + book.getAuthor();
-        notificationProducer.sendNotification(notificationMessage);
+        try {
+            notificationProducer.sendNotification(notificationMessage);
+        } catch (Exception e) {
+            logger.info("Could not send Kafka notification: {}", e.getMessage());
+        }
         return bookRepository.save(book);
     }
 
