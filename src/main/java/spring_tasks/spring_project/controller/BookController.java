@@ -78,7 +78,7 @@ public class BookController {
     }
 
     @PostMapping("/addViaAPI")
-    public Book addViaAPI(@Valid @RequestBody String id){
+    public Book addViaAPI(@Valid @RequestBody GoogleApiRequestDTO id){
         return bookService.addViaApi(id);
     }
 

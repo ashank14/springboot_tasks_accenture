@@ -6,6 +6,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import spring_tasks.spring_project.dto.BookRequestDTO;
 import spring_tasks.spring_project.dto.BookResponseDTO;
 import spring_tasks.spring_project.kafka.producer.KafkaProducerService;
@@ -23,6 +24,10 @@ import static org.mockito.Mockito.*;
 
 
 @SpringBootTest
+@TestPropertySource(properties = {
+        "google.api.key=mock-key",
+        "google.api.base-url=https://mock-api.com"
+})
 class BookServiceTest {
 
     @Mock

@@ -161,8 +161,9 @@ public class BookService {
 
     @CircuitBreaker(name = "googleApiBreaker", fallbackMethod = "addViaApiFallback")
     @Retry(name = "googleApiRetry", fallbackMethod = "addViaApiFallback")
-    public Book addViaApi(String id) {
+    public Book addViaApi(GoogleApiRequestDTO bookId) {
 
+        String id=bookId.id();
         logger.info("Getting book via API with id: {}", id);
 
         String cleanId = id.replaceAll("^\"|\"$", "");
@@ -204,10 +205,12 @@ public class BookService {
                 googleResponse.publishedDate()
         );
 
+        String notificationMessage = "New Book Added: " + book.getTitle() + " by " + book.getAuthor();
+        notificationProducer.sendNotification(notificationMessage);
         return bookRepository.save(book);
     }
 
-    public Book addViaApiFallback(String id, Throwable t) {
+    public Book addViaApiFallback(GoogleApiRequestDTO id, Throwable t) {
         logger.error("Fallback triggered: {}", t.getMessage());
         Book placeholder = new Book(
                 "Google Books API is currently unavailable",

@@ -8,9 +8,13 @@ import org.springframework.boot.test.context.TestConfiguration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.TestConstructor;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import spring_tasks.spring_project.dto.BookRequestDTO;
 import spring_tasks.spring_project.dto.BookResponseDTO;
+import spring_tasks.spring_project.dto.GoogleApiRequestDTO;
+import spring_tasks.spring_project.dto.GoogleApiResponseDTO;
+import spring_tasks.spring_project.models.Book;
 import spring_tasks.spring_project.service.BookService;
 
 import java.time.LocalDate;
@@ -23,6 +27,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@TestPropertySource(properties = {
+        "google.api.key=mock-key",
+        "google.api.base-url=https://mock-api.com"
+})
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class BookControllerTest {
 
@@ -94,6 +102,70 @@ class BookControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("Book removed"));
     }
+
+    @Test
+    void testSearchBooks() throws Exception {
+        List<GoogleApiResponseDTO> searchResults = List.of(
+                new GoogleApiResponseDTO("id1", "API Book", List.of("Author"), LocalDate.now())
+        );
+
+        when(bookService.searchBooks("API Book")).thenReturn(searchResults);
+
+        mockMvc.perform(get("/books/search")
+                        .param("title", "API Book"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("API Book"))
+                .andExpect(jsonPath("$[0].id").value("id1"));
+    }
+
+    @Test
+    void testSearchBooksFallback() throws Exception {
+        // Simulate fallback by returning the fallback response directly
+        List<GoogleApiResponseDTO> fallbackResult = List.of(
+                new GoogleApiResponseDTO("N/A", "Google Books API is currently unavailable", List.of("N/A"), null)
+        );
+
+        when(bookService.searchBooks("Unavailable")).thenReturn(fallbackResult);
+
+        mockMvc.perform(get("/books/search")
+                        .param("title", "Unavailable"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("Google Books API is currently unavailable"));
+    }
+
+    @Test
+    void testAddViaApi() throws Exception {
+        Book mockBook = new Book("API Book", "Author", LocalDate.now());
+        mockBook.setId(1);
+        GoogleApiRequestDTO id=new GoogleApiRequestDTO("id1");
+        String jsonRequest = objectMapper.writeValueAsString(id);
+
+        when(bookService.addViaApi(id)).thenReturn(mockBook);
+
+        mockMvc.perform(post("/books/addViaAPI")
+                        .contentType("application/json")
+                        .content(jsonRequest))  // since your controller expects a JSON string body
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("API Book"))
+                .andExpect(jsonPath("$.author").value("Author"));
+    }
+
+    @Test
+    void testAddViaApiFallback() throws Exception {
+        Book fallbackBook = new Book("Google Books API is currently unavailable", "no author", null);
+        GoogleApiRequestDTO id=new GoogleApiRequestDTO("id1");
+        String jsonRequest = objectMapper.writeValueAsString(id);
+        when(bookService.addViaApi(id)).thenReturn(fallbackBook);
+
+        mockMvc.perform(post("/books/addViaAPI")
+                        .contentType("application/json")
+                        .content(jsonRequest))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Google Books API is currently unavailable"))
+                .andExpect(jsonPath("$.author").value("no author"));
+    }
+
+
 
     @TestConfiguration
     static class TestConfig {
