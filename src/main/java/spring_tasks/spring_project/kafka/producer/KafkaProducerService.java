@@ -18,7 +18,13 @@ public class KafkaProducerService {
     @Value("${spring.kafka.topic.name}")
     private String topic;
 
+    @Value("${app.kafka.enabled}")
+    private boolean kafkaEnabled;
     public void sendNotification(String message) {
+        if (!kafkaEnabled) {
+            logger.info("Kafka notification skipped: {}", message);
+            return;
+        }
         logger.info("Sending notification: {}", message);
         kafkaTemplate.send(topic, message);
     }
