@@ -144,7 +144,7 @@ class BookControllerTest {
 
         mockMvc.perform(post("/books/addViaAPI")
                         .contentType("application/json")
-                        .content(jsonRequest))  // since your controller expects a JSON string body
+                        .content(jsonRequest))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("API Book"))
                 .andExpect(jsonPath("$.author").value("Author"));
