@@ -110,6 +110,8 @@ public class BookService {
     @Retry(name = "googleApiRetry", fallbackMethod = "searchBooksFallback")
     public List<GoogleApiResponseDTO> searchBooks(String title) {
         logger.info("Fetching from API");
+        logger.info("Fetching from API");
+
 
         String url = baseURL + "?q=intitle:" + title + "&key=" + googleApiKey;
 

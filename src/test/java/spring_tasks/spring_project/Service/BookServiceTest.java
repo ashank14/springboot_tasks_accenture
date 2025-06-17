@@ -23,8 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 
-@SpringBootTest
-@TestPropertySource(properties = {
+ @TestPropertySource(properties = {
         "google.api.key=mock-key",
         "google.api.base-url=https://mock-api.com"
 })
@@ -35,7 +34,6 @@ class BookServiceTest {
 
     @Mock
     private KafkaProducerService kafkaProducerService;
-
     @InjectMocks
     private BookService bookService;
 
