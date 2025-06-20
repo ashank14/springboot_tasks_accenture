@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import reactor.core.publisher.Mono;
 import spring_tasks.spring_project.dto.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,72 +80,5 @@ public class BookController {
     public Book addViaAPI(@Valid @RequestBody GoogleApiRequestDTO id){
         return bookService.addViaApi(id);
     }
-
-
-
-
-
-
-    //Initial Code without H2 database(using an arraylist as an in memory database)
-    /*In-memory Database
-    private List<Book> books=new ArrayList<>();
-
-    public BookController(){
-        this.books.add(new Book(1,"book1","author1",LocalDate.of(2025,6,5)));
-        this.books.add(new Book(2,"book2","author2",LocalDate.of(2025,6,1)));
-    }
-
-
-    @GetMapping
-    public List<Book> getAll(){
-        return books;
-    }
-
-    @GetMapping("/{id}")
-    public Book getBook(@PathVariable int id){
-        for(Book b:books){
-            if(b.id==id){
-                return b;
-            }
-        }
-        return null;
-    }
-
-    @DeleteMapping("/{id}")
-    public String deleteBook(@PathVariable int id){
-        boolean deleted=books.removeIf(book->book.id==id);
-        return deleted?"Deleted":"id not found";
-
-    }
-
-    @PostMapping
-    public ResponseEntity<?> addBook(@RequestBody Book book){
-        boolean exists=books.stream().anyMatch(b->b.id==book.id);
-
-        if(exists){
-            return ResponseEntity.status(409).body("Book already exists");
-        }
-
-        books.add(book);
-
-        return ResponseEntity.status(201).body(books);
-
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateBook(@PathVariable int id,@RequestBody Book newbook){
-
-        for(Book book:books){
-            if(book.id==id){
-                book.title=newbook.title;
-                book.author=newbook.author;
-                book.publishedDate=newbook.publishedDate;
-
-                return ResponseEntity.ok(book);
-            }
-        }
-        return ResponseEntity.status(404).body("Book not found");
-    }*/
-
 
 }

@@ -3,6 +3,7 @@ package spring_tasks.spring_project.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,9 @@ public class BookService {
     @Value("${google.api.key}")
     private String googleApiKey;
 
+    @Autowired
+    private MeterRegistry meterRegistry;
+
     // Get all books
     public List<BookResponseDTO> getAllBooks() {
         logger.info("getting books");
@@ -75,7 +79,7 @@ public class BookService {
         } catch (Exception e) {
             logger.warn("Could not send Kafka notification: {}", e.getMessage());
         }
-
+        meterRegistry.counter("books.added.count").increment();
         return new BookResponseDTO(savedBook.getId(), savedBook.getTitle(), savedBook.getAuthor(), savedBook.getPublishedDate());
     }
 
@@ -218,6 +222,7 @@ public class BookService {
         } catch (Exception e) {
             logger.info("Could not send Kafka notification: {}", e.getMessage());
         }
+        meterRegistry.counter("books.added.count").increment();
         return bookRepository.save(book);
     }
 

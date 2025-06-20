@@ -1,14 +1,18 @@
-package spring_tasks.spring_project.Controller;
+package spring_tasks.spring_project.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import spring_tasks.spring_project.dto.BookRequestDTO;
 import spring_tasks.spring_project.dto.BookResponseDTO;
@@ -25,24 +29,20 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@TestPropertySource(properties = {
-        "google.api.key=mock-key",
-        "google.api.base-url=https://mock-api.com"
-})
+@WebMvcTest(BookController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class BookControllerTest {
 
-    private final MockMvc mockMvc;
-    private final BookService bookService;
-    private final ObjectMapper objectMapper;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-    BookControllerTest(MockMvc mockMvc, BookService bookService, ObjectMapper objectMapper) {
-        this.mockMvc = mockMvc;
-        this.bookService = bookService;
-        this.objectMapper = objectMapper;
-    }
+
+
+    @MockitoBean
+    private BookService bookService;
 
     @Test
     void testGetAllBooks() throws Exception {
@@ -140,6 +140,7 @@ class BookControllerTest {
         GoogleApiRequestDTO id=new GoogleApiRequestDTO("id1");
         String jsonRequest = objectMapper.writeValueAsString(id);
 
+
         when(bookService.addViaApi(id)).thenReturn(mockBook);
 
         mockMvc.perform(post("/books/addViaAPI")
@@ -167,11 +168,4 @@ class BookControllerTest {
 
 
 
-    @TestConfiguration
-    static class TestConfig {
-        @Bean
-        BookService bookService() {
-            return mock(BookService.class);
-        }
-    }
 }
