@@ -1,4 +1,4 @@
-name: Spring Boot CI (Java 17 + Maven + Kafka)
+name: Spring Boot CI (Java 17 + Maven)
 
 on:
   push:
@@ -12,40 +12,9 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    services:
-      zookeeper:
-        image: confluentinc/cp-zookeeper:7.4.4
-        env:
-          ZOOKEEPER_CLIENT_PORT: 2181
-          ZOOKEEPER_TICK_TIME: 2000
-        ports:
-          - 2181:2181
-        options: >-
-          --health-cmd "echo ruok | nc localhost 2181 | grep imok"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      kafka:
-        image: confluentinc/cp-kafka:7.4.4
-        ports:
-          - 29092:29092
-        env:
-          KAFKA_BROKER_ID: 1
-          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:29092
-          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
-          KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-        options: >-
-          --health-cmd "kafka-topics.sh --bootstrap-server localhost:29092 --list"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
     env:
       GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-      KAFKA_ENABLED: true
+      KAFKA_ENABLED: false
 
     steps:
       - name: Checkout Repository
@@ -65,6 +34,12 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven
+
+      - name: Start Kafka & Zookeeper with Docker Compose
+        run: docker-compose -f docker/docker-compose.yml up -d
+
+      - name: Wait for Kafka & Zookeeper to be ready
+        run: sleep 20
 
       - name: Run Tests with Maven
         run: mvn --batch-mode --update-snapshots clean test
