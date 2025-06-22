@@ -114,8 +114,6 @@ public class BookService {
     @Retry(name = "googleApiRetry", fallbackMethod = "searchBooksFallback")
     public List<GoogleApiResponseDTO> searchBooks(String title) {
         logger.info("Fetching from API");
-        logger.info("Fetching from API");
-
 
         String url = baseURL + "?q=intitle:" + title + "&key=" + googleApiKey;
 
@@ -133,20 +131,11 @@ public class BookService {
             JsonNode volumeInfo = item.get("volumeInfo");
             logger.info(String.valueOf(volumeInfo));
 
-            List<String> authors = volumeInfo.has("authors") ?
-                    StreamSupport.stream(volumeInfo.get("authors").spliterator(), false)
-                            .map(JsonNode::asText)
-                            .collect(Collectors.toList()) :
-                    List.of("Unknown");
+            List<String> authors = volumeInfo.has("authors") ? StreamSupport.stream(volumeInfo.get("authors").spliterator(), false).map(JsonNode::asText).collect(Collectors.toList()) : List.of("Unknown");
 
             logger.info("date");
-            DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                    .appendPattern("yyyy[-MM[-dd]]")
-                    .parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
-                    .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
-                    .toFormatter();
+            DateTimeFormatter formatter = new DateTimeFormatterBuilder().appendPattern("yyyy[-MM[-dd]]").parseDefaulting(ChronoField.MONTH_OF_YEAR, 1).parseDefaulting(ChronoField.DAY_OF_MONTH, 1).toFormatter();
             LocalDate publishedDate = LocalDate.parse(volumeInfo.get("publishedDate").asText(), formatter);
-
             logger.info("returning books");
             books.add(new GoogleApiResponseDTO(
                     item.get("id").asText(),
@@ -155,7 +144,6 @@ public class BookService {
                     publishedDate
             ));
         });
-
         return books;
     }
 

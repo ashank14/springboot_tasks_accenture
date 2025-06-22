@@ -38,6 +38,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import spring_tasks.spring_project.dto.BookRequestDTO;
+import spring_tasks.spring_project.dto.GoogleApiRequestDTO;
 import spring_tasks.spring_project.dto.GoogleApiResponseDTO;
 import spring_tasks.spring_project.models.Book;
 import spring_tasks.spring_project.repository.BookRepository;
@@ -196,4 +197,44 @@ public class IntegrationTest {
                 .andExpect(jsonPath("$[0].title").value("Test Book"))
                 .andExpect(jsonPath("$[0].author[0]").value("Test Author"));
     }
+
+    @Test
+    void shouldAddBookViaApi() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+
+        // Outer JSON object
+        ObjectNode response = mapper.createObjectNode();
+        response.put("id", "test-id-1");
+
+        // Inner volumeInfo object
+        ObjectNode volumeInfo = mapper.createObjectNode();
+        volumeInfo.put("title", "Test Book");
+        volumeInfo.putArray("authors").add("Test Author");
+        volumeInfo.put("publishedDate", "2024-06-15");
+
+        // Attach volumeInfo inside response
+        response.set("volumeInfo", volumeInfo);
+
+        // Mock RestTemplate API call
+        when(restTemplate.getForEntity(anyString(), eq(JsonNode.class)))
+                .thenReturn(new ResponseEntity<>(response, HttpStatus.OK));
+
+        // Request DTO
+        GoogleApiRequestDTO id = new GoogleApiRequestDTO("test-id-1");
+
+        // Perform POST /addViaAPI call
+        mockMvc.perform(MockMvcRequestBuilders.post("/books/addViaAPI")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(id)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Test Book"))
+                .andExpect(jsonPath("$.author").value("Test Author"))
+                .andExpect(jsonPath("$.publishedDate").value("2024-06-15"));
+
+        // DB verification
+        assertThat(bookRepository.findAll()).hasSize(1);
+        Book savedBook = bookRepository.findAll().get(0);
+        assertThat(savedBook.getTitle()).isEqualTo("Test Book");
+    }
+
 }

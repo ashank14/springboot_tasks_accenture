@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 public class KafkaConsumerService {
     private static final Logger logger = LoggerFactory.getLogger(KafkaConsumerService.class);
 
-
     @KafkaListener(topics = "book-notification", groupId = "book-group")
     public void listen(String message) {
         logger.info("Received Notification: {}", message);
